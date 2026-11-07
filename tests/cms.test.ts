@@ -124,8 +124,27 @@ test('a slug from untyped code is an error, not the text "undefined"', () => {
 });
 
 test('the login origin must be only an origin, so the API root has no double slash', () => {
-  for (const loginOrigin of ['https://login.example.com/', 'https://login.example.com/path', 'login.example.com', '']) {
+  const refused = [
+    'https://login.example.com/',
+    'https://login.example.com/path',
+    'https://login.example.com\\path',
+    'https://login.example.com?a=1',
+    'https://login.example.com#top',
+    'https://user@login.example.com',
+    'ftp://login.example.com',
+    'ws://login.example.com',
+    'login.example.com',
+    ''
+  ];
+  for (const loginOrigin of refused) {
     expect(() => cmsConfig({ ...input, loginOrigin })).toThrow(`"${loginOrigin}"`);
+  }
+});
+
+test('any spelling of an origin passes and is kept as written', () => {
+  const accepted = ['https://LOGIN.example.com', 'https://école.example', 'https://login.example.com:443', 'http://localhost:5173', 'http://[::1]:8787'];
+  for (const loginOrigin of accepted) {
+    expect(cmsConfig({ ...input, loginOrigin }).backend.api_root).toBe(`${loginOrigin}/site`);
   }
 });
 
@@ -143,6 +162,13 @@ test('a site with nothing to edit is an error, because the CMS could not load it
   const { singletons: _singletons, ...withoutContent } = input;
   expect(() => cmsConfig(withoutContent)).toThrow('nothing to edit');
   expect(() => cmsConfig({ ...withoutContent, singletons: [] })).toThrow('nothing to edit');
+  expect(() => cmsConfig({ ...withoutContent, fileGroups: [{ name: 'pages', label: 'Pages', files: [] }] })).toThrow('nothing to edit');
+});
+
+test('an empty folder still counts, because people can add entries to it', () => {
+  const { singletons: _singletons, ...withoutContent } = input;
+  const collections = [{ name: 'posts', label: 'Blog', folder: 'src/lib/content/posts', contract: postContract }];
+  expect(cmsConfig({ ...withoutContent, collections }).collections).toHaveLength(1);
 });
 
 test('a name used twice at the same level is an error, naming it', () => {

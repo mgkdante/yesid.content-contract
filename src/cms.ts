@@ -121,7 +121,8 @@ const RESERVED_SLUGS = new Set(['auth', 'api', 'admin', 'login', 'editor', 'acco
 
 const isSiteSlug = (slug: string): boolean => typeof slug === 'string' && /^[a-z0-9][a-z0-9.-]{0,62}$/.test(slug) && !RESERVED_SLUGS.has(slug);
 
-const isOrigin = (value: string): boolean => URL.canParse(value) && new URL(value).origin === value;
+/** HTTP or HTTPS and a host, with nothing after it, in any spelling a browser accepts. */
+const isOrigin = (value: string): boolean => /^https?:\/\/[^/\\?#@\s]+$/i.test(value) && URL.canParse(value);
 
 function refuseRepeats(names: readonly string[], where: string): void {
   const repeated = names.find((name, index) => names.indexOf(name) !== index);
@@ -131,11 +132,14 @@ function refuseRepeats(names: readonly string[], where: string): void {
 /** Refuses a setup that would only fail later, in the editor or on the login service. */
 function checkInput({ repo, loginOrigin, siteSlug, locales, defaultLocale, singletons = [], fileGroups = [], collections = [], branch }: CmsConfigInput): void {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error(`The repository "${repo}" is not owner/name`);
-  if (!isOrigin(loginOrigin)) throw new Error(`The login origin "${loginOrigin}" must be only an origin, like https://login.example.com`);
+  if (!isOrigin(loginOrigin)) throw new Error(`The login origin "${loginOrigin}" must be only an HTTP or HTTPS origin, like https://login.example.com`);
   if (!isSiteSlug(siteSlug)) throw new Error(`The site slug "${siteSlug}" is not valid`);
   if (!locales.includes(defaultLocale)) throw new Error(`The default language "${defaultLocale}" is not in the list of languages`);
   if (branch?.trim() === '') throw new Error('The branch cannot be blank');
-  if (singletons.length + fileGroups.length + collections.length === 0) throw new Error('The site has nothing to edit: give it singletons, file groups or collections');
+  // A group counts by its files. An empty folder counts, because people can add entries to it.
+  if (singletons.length + fileGroups.flatMap(({ files }) => files).length + collections.length === 0) {
+    throw new Error('The site has nothing to edit: give it singletons, file groups or collections');
+  }
   refuseRepeats(singletons.map(({ name }) => name), 'the singletons');
   refuseRepeats([...fileGroups, ...collections].map(({ name }) => name), 'the file groups and collections');
   for (const { label, files } of fileGroups) refuseRepeats(files.map(({ name }) => name), `the group "${label}"`);

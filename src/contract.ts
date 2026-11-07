@@ -46,11 +46,9 @@ export const date = (label: string, { hint, shared }: { hint?: string; shared?: 
 export const group = <Shape extends z.ZodRawShape>(label: string, shape: Shape, collapsed = true) =>
   withMeta(z.strictObject(shape), { label, widget: 'object', collapsed });
 
-/** A fixed size or an optional list, never both: one needs exactly `count` items, the other allows none. */
-type ListOptions = { count: number; optional?: never } | { count?: never; optional?: boolean };
-
-export const list = <Item extends z.ZodType>(label: string, item: Item, options: ListOptions = {}) => {
+export const list = <Item extends z.ZodType>(label: string, item: Item, options: { count?: number; optional?: boolean } = {}) => {
   const { count, optional } = options;
+  // One needs exactly `count` items and the other allows none, so a field could not honestly say both.
   if (count !== undefined && optional) throw new Error(`The list "${label}" cannot be both a fixed size and optional`);
   const schema = count === undefined ? (optional ? z.array(item) : z.array(item).min(1)) : z.array(item).length(count);
   return withMeta(schema, { label, widget: 'list', count, optional });

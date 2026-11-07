@@ -57,10 +57,14 @@ test('a free list needs at least one item, unless it is optional', () => {
 });
 
 test('a list cannot be both a fixed size and optional, because the two promise different things', () => {
-  // @ts-expect-error The types refuse this too.
   expect(() => list('Steps', line('Step'), { count: 2, optional: true })).toThrow('Steps');
-  expect(() => list('Steps', line('Step'), { count: 2 })).not.toThrow();
   expect(() => list('Steps', line('Step'), { optional: true })).not.toThrow();
+});
+
+test('a fixed list may say it is not optional, and a wrapper can pass its options through', () => {
+  expect(list('Steps', line('Step'), { count: 1, optional: false }).safeParse(['One']).success).toBe(true);
+  const wrapped = (options: { count?: number; optional?: boolean }) => list('Steps', line('Step'), options);
+  expect(wrapped({ count: 1 }).safeParse(['One']).success).toBe(true);
 });
 
 test('a photo needs a path, unless it is optional', () => {

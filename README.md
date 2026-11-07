@@ -51,13 +51,13 @@ Write `config` to YAML in a build script, with `Bun.YAML.stringify(config, null,
 | `image(label, { hint, optional, shared })` | `image`, photo formats | Not blank, unless `optional` |
 | `date(label, { hint, shared })` | `datetime`, date only | A real `YYYY-MM-DD` date |
 | `group(label, shape, collapsed = true)` | `object` | Unknown fields are refused |
-| `list(label, item, { count } or { optional })` | `list` | Exactly `count` items; otherwise at least one, unless `optional`. Asking for both is an error |
+| `list(label, item, { count, optional })` | `list` | Exactly `count` items; otherwise at least one, unless `optional`. Asking for both is an error |
 
 `shared: true` keeps one value for every language, edited in the default one.
 
 ## Other exports
 
-- `cmsConfig(input)`: the whole CMS configuration. `fileGroups` put several JSON files under one name in the sidebar, such as a site's pages, with one file per language. `singletons` are single JSON files; a site with only singletons shows them as one list, without separators. `collections` are folders people can add to, such as a blog, with one Markdown file per language of an entry. `branch` defaults to `main`, and the media folders to `static/images/uploads` and `/images/uploads`. A new folder entry starts in the default language, and the editor offers the others. It throws on a setup that would only fail later: a `repo` that isn't `owner/name`, a `loginOrigin` with a path or a trailing slash, a slug that isn't valid or that the login service keeps for itself, a default language outside the list, a blank branch, nothing to edit, or a name used twice at the same level.
+- `cmsConfig(input)`: the whole CMS configuration. `fileGroups` put several JSON files under one name in the sidebar, such as a site's pages, with one file per language. `singletons` are single JSON files; a site with only singletons shows them as one list, without separators. `collections` are folders people can add to, such as a blog, with one Markdown file per language of an entry. `branch` defaults to `main`, and the media folders to `static/images/uploads` and `/images/uploads`. A new folder entry starts in the default language, and the editor offers the others. It throws on a setup that would only fail later: a `repo` that isn't `owner/name`, a `loginOrigin` that isn't only an HTTP or HTTPS origin, with no path or trailing slash, a slug that isn't valid or that the login service keeps for itself, a default language outside the list, a blank branch, nothing to edit, or a name used twice at the same level.
 - `contractFields(contract)`: only the CMS fields, for a configuration you build yourself.
 - `canonicalJson(contract, text)`: a content file rewritten in the contract's order, which is the order the CMS saves in. Run it after reordering a contract, so the next save only shows what really changed.
 
