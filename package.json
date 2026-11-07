@@ -1,0 +1,29 @@
+{
+  "name": "@yesid/content-contract",
+  "version": "0.1.0",
+  "description": "One Zod description of a site's editable content, giving its types, its build checks and its Sveltia CMS fields.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mgkdante/yesid.content-contract.git"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": ["src"],
+  "packageManager": "bun@1.4.4",
+  "scripts": {
+    "test": "bun test tests",
+    "check": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "zod": "^4.6.0"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.4",
+    "typescript": "7.0.2",
+    "zod": "4.6.7"
+  }
+}
