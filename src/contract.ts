@@ -48,6 +48,8 @@ export const group = <Shape extends z.ZodRawShape>(label: string, shape: Shape, 
 
 export const list = <Item extends z.ZodType>(label: string, item: Item, options: { count?: number; optional?: boolean } = {}) => {
   const { count, optional } = options;
+  // One needs exactly `count` items and the other allows none, so a field could not honestly say both.
+  if (count !== undefined && optional) throw new Error(`The list "${label}" cannot be both a fixed size and optional`);
   const schema = count === undefined ? (optional ? z.array(item) : z.array(item).min(1)) : z.array(item).length(count);
   return withMeta(schema, { label, widget: 'list', count, optional });
 };
