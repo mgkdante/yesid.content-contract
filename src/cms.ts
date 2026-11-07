@@ -28,6 +28,15 @@ export interface ContentFolder {
   contract: z.ZodObject;
 }
 
+/** Several content files under one name in the CMS sidebar, such as a site's pages. */
+export interface ContentFileGroup {
+  name: string;
+  label: string;
+  /** A Material Symbols name. */
+  icon?: string;
+  files: readonly ContentFile[];
+}
+
 export interface CmsConfigInput {
   /** `owner/name` of the site's repository. */
   repo: string;
@@ -37,7 +46,8 @@ export interface CmsConfigInput {
   siteSlug: string;
   locales: readonly string[];
   defaultLocale: string;
-  singletons: readonly ContentFile[];
+  singletons?: readonly ContentFile[];
+  fileGroups?: readonly ContentFileGroup[];
   collections?: readonly ContentFolder[];
   branch?: string;
   mediaFolder?: string;
@@ -57,18 +67,38 @@ export interface CmsConfig {
   media_folder: string;
   public_folder: string;
   i18n: { structure: 'multiple_files'; locales: string[]; default_locale: string };
-  singletons: { name: string; label: string; file: string; format: 'json'; i18n: true; fields: CmsField[] }[];
-  collections?: {
-    name: string;
-    label: string;
-    label_singular?: string;
-    folder: string;
-    create: true;
-    extension: 'md';
-    format: 'yaml-frontmatter';
-    i18n: true;
-    fields: CmsField[];
-  }[];
+  singletons?: CmsFile[];
+  collections?: (CmsFileGroup | CmsFolder)[];
+}
+
+interface CmsFile {
+  name: string;
+  label: string;
+  file: string;
+  format: 'json';
+  i18n: true;
+  fields: CmsField[];
+}
+
+interface CmsFileGroup {
+  name: string;
+  label: string;
+  icon?: string;
+  format: 'json';
+  i18n: true;
+  files: CmsFile[];
+}
+
+interface CmsFolder {
+  name: string;
+  label: string;
+  label_singular?: string;
+  folder: string;
+  create: true;
+  extension: 'md';
+  format: 'yaml-frontmatter';
+  i18n: true;
+  fields: CmsField[];
 }
 
 const metaOf = (schema: z.ZodType, name: string): FieldMeta => {
@@ -111,14 +141,45 @@ function toField(name: string, schema: z.ZodType): CmsField {
   return { ...common, widget: meta.widget, ...(meta.optional ? { required: false } : {}), ...meta.options };
 }
 
+const toFile = ({ name, label, file, contract }: ContentFile): CmsFile => ({
+  name,
+  label,
+  file,
+  format: 'json',
+  i18n: true,
+  fields: contractFields(contract)
+});
+
+const toGroup = ({ name, label, icon, files }: ContentFileGroup): CmsFileGroup => ({
+  name,
+  label,
+  ...(icon ? { icon } : {}),
+  format: 'json',
+  i18n: true,
+  files: files.map(toFile)
+});
+
+const toFolder = ({ name, label, labelSingular, folder, contract }: ContentFolder): CmsFolder => ({
+  name,
+  label,
+  ...(labelSingular ? { label_singular: labelSingular } : {}),
+  folder,
+  create: true,
+  extension: 'md',
+  format: 'yaml-frontmatter',
+  i18n: true,
+  fields: contractFields(contract)
+});
+
 /** The CMS fields for a contract, in the contract's order. */
 export const contractFields = (contract: z.ZodObject): CmsField[] => fieldsOf(contract.shape);
 
 /** A site's whole editor setup. Saves only reach a branch the login service also allows. */
 export function cmsConfig(input: CmsConfigInput): CmsConfig {
-  const { repo, loginOrigin, siteSlug, locales, defaultLocale, singletons, collections = [] } = input;
+  const { repo, loginOrigin, siteSlug, locales, defaultLocale, singletons, fileGroups = [], collections = [] } = input;
   if (!/^[a-z0-9][a-z0-9.-]{0,62}$/.test(siteSlug)) throw new Error(`The site slug "${siteSlug}" is not valid`);
   if (!locales.includes(defaultLocale)) throw new Error(`The default language "${defaultLocale}" is not in the list of languages`);
+  const groups = [...fileGroups.map(toGroup), ...collections.map(toFolder)];
 
   return {
     backend: {
@@ -133,28 +194,7 @@ export function cmsConfig(input: CmsConfigInput): CmsConfig {
     media_folder: input.mediaFolder ?? 'static/images/uploads',
     public_folder: input.publicFolder ?? '/images/uploads',
     i18n: { structure: 'multiple_files', locales: [...locales], default_locale: defaultLocale },
-    singletons: singletons.map(({ name, label, file, contract }) => ({
-      name,
-      label,
-      file,
-      format: 'json',
-      i18n: true,
-      fields: contractFields(contract)
-    })),
-    ...(collections.length === 0
-      ? {}
-      : {
-          collections: collections.map(({ name, label, labelSingular, folder, contract }) => ({
-            name,
-            label,
-            ...(labelSingular ? { label_singular: labelSingular } : {}),
-            folder,
-            create: true as const,
-            extension: 'md' as const,
-            format: 'yaml-frontmatter' as const,
-            i18n: true as const,
-            fields: contractFields(contract)
-          }))
-        })
+    ...(singletons ? { singletons: singletons.map(toFile) } : {}),
+    ...(groups.length === 0 ? {} : { collections: groups })
   };
 }

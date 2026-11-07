@@ -9,7 +9,7 @@ It checks structure only: a required text can't be blank, a misspelled field is 
 Releases are tarballs on GitHub, not on npm. Pin the exact version, and install Zod yourself so the project keeps a single copy:
 
 ```sh
-bun add -E zod https://github.com/mgkdante/yesid.content-contract/releases/download/v0.2.0/yesid-content-contract-0.2.0.tgz
+bun add -E zod https://github.com/mgkdante/yesid.content-contract/releases/download/v0.3.0/yesid-content-contract-0.3.0.tgz
 ```
 
 The package ships TypeScript source, so your `tsconfig.json` needs `allowImportingTsExtensions`. It is meant for build scripts, tests and `import type`. If you import it at runtime through Vite's server build, list it in `ssr.noExternal`.
@@ -57,7 +57,7 @@ Write `config` to YAML in a build script, with `Bun.YAML.stringify(config, null,
 
 ## Other exports
 
-- `cmsConfig(input)`: the whole CMS configuration. `singletons` are one JSON file per language. `collections` are folders people can add to, such as a blog, with one Markdown file per language of an entry. `branch` defaults to `main`, and the media folders to `static/images/uploads` and `/images/uploads`.
+- `cmsConfig(input)`: the whole CMS configuration. `fileGroups` put several JSON files under one name in the sidebar, such as a site's pages, with one file per language. `singletons` are single JSON files; a site with only singletons shows them as one list, without separators. `collections` are folders people can add to, such as a blog, with one Markdown file per language of an entry. `branch` defaults to `main`, and the media folders to `static/images/uploads` and `/images/uploads`.
 - `contractFields(contract)`: only the CMS fields, for a configuration you build yourself.
 - `canonicalJson(contract, text)`: a content file rewritten in the contract's order, which is the order the CMS saves in. Run it after reordering a contract, so the next save only shows what really changed.
 
