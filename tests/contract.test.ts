@@ -56,6 +56,13 @@ test('a free list needs at least one item, unless it is optional', () => {
   expect(contract.safeParse({ ...valid(), notes: [] }).success).toBe(true);
 });
 
+test('a list cannot be both a fixed size and optional, because the two promise different things', () => {
+  // @ts-expect-error The types refuse this too.
+  expect(() => list('Steps', line('Step'), { count: 2, optional: true })).toThrow('Steps');
+  expect(() => list('Steps', line('Step'), { count: 2 })).not.toThrow();
+  expect(() => list('Steps', line('Step'), { optional: true })).not.toThrow();
+});
+
 test('a photo needs a path, unless it is optional', () => {
   expect(image('Photo').safeParse('').success).toBe(false);
   expect(image('Photo').safeParse('/images/uploads/van.webp').success).toBe(true);

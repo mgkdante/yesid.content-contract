@@ -113,6 +113,56 @@ test('a site slug that is not a plain path segment is an error, naming it', () =
   }
 });
 
+test('a slug the login service keeps for itself is an error, naming it', () => {
+  for (const siteSlug of ['auth', 'api', 'admin', 'login', 'editor', 'account', 'privacy', 'terms']) {
+    expect(() => cmsConfig({ ...input, siteSlug })).toThrow(`"${siteSlug}"`);
+  }
+});
+
+test('a slug from untyped code is an error, not the text "undefined"', () => {
+  expect(() => cmsConfig({ ...input, siteSlug: undefined as unknown as string })).toThrow('"undefined"');
+});
+
+test('the login origin must be only an origin, so the API root has no double slash', () => {
+  for (const loginOrigin of ['https://login.example.com/', 'https://login.example.com/path', 'login.example.com', '']) {
+    expect(() => cmsConfig({ ...input, loginOrigin })).toThrow(`"${loginOrigin}"`);
+  }
+});
+
+test('a repository must be owner/name', () => {
+  for (const repo of ['not a repo', 'owner', 'owner/site/extra', '']) {
+    expect(() => cmsConfig({ ...input, repo })).toThrow(`"${repo}"`);
+  }
+});
+
+test('a blank branch is an error', () => {
+  expect(() => cmsConfig({ ...input, branch: ' ' })).toThrow('branch');
+});
+
+test('a site with nothing to edit is an error, because the CMS could not load it', () => {
+  const { singletons: _singletons, ...withoutContent } = input;
+  expect(() => cmsConfig(withoutContent)).toThrow('nothing to edit');
+  expect(() => cmsConfig({ ...withoutContent, singletons: [] })).toThrow('nothing to edit');
+});
+
+test('a name used twice at the same level is an error, naming it', () => {
+  const page = { name: 'home', label: 'Home', file: 'src/lib/content/home.{{locale}}.json', contract: pageContract };
+  const folder = { name: 'pages', label: 'Posts', folder: 'src/lib/content/posts', contract: postContract };
+  const { singletons: _singletons, ...withoutContent } = input;
+  expect(() => cmsConfig({ ...withoutContent, singletons: [page, page] })).toThrow('"home"');
+  expect(() => cmsConfig({ ...withoutContent, fileGroups: [{ name: 'pages', label: 'Pages', files: [page, page] }] })).toThrow('"home"');
+  expect(() => cmsConfig({ ...withoutContent, fileGroups: [{ name: 'pages', label: 'Pages', files: [page] }], collections: [folder] })).toThrow('"pages"');
+});
+
+test('changing one result does not change the next one', () => {
+  const first = cmsConfig(input);
+  (first.slug as { encoding: string }).encoding = 'unicode';
+  (first.media_libraries.default.config.transformations.raster_image as { quality: number }).quality = 1;
+  const next = cmsConfig(input);
+  expect(next.slug.encoding).toBe('ascii');
+  expect(next.media_libraries.default.config.transformations.raster_image.quality).toBe(85);
+});
+
 test('the branch defaults to main and photos to the upload folder', () => {
   const config = cmsConfig(input);
   expect(config.backend.branch).toBe('main');

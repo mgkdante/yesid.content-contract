@@ -116,6 +116,31 @@ const SAFE_UPLOADS = {
   }
 } as const;
 
+/** Site names the login service keeps for its own pages: `RESERVED` in yesid.login. It refuses them either way; this says so at build time. */
+const RESERVED_SLUGS = new Set(['auth', 'api', 'admin', 'login', 'editor', 'account', 'privacy', 'terms']);
+
+const isSiteSlug = (slug: string): boolean => typeof slug === 'string' && /^[a-z0-9][a-z0-9.-]{0,62}$/.test(slug) && !RESERVED_SLUGS.has(slug);
+
+const isOrigin = (value: string): boolean => URL.canParse(value) && new URL(value).origin === value;
+
+function refuseRepeats(names: readonly string[], where: string): void {
+  const repeated = names.find((name, index) => names.indexOf(name) !== index);
+  if (repeated !== undefined) throw new Error(`The name "${repeated}" is used twice in ${where}`);
+}
+
+/** Refuses a setup that would only fail later, in the editor or on the login service. */
+function checkInput({ repo, loginOrigin, siteSlug, locales, defaultLocale, singletons = [], fileGroups = [], collections = [], branch }: CmsConfigInput): void {
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error(`The repository "${repo}" is not owner/name`);
+  if (!isOrigin(loginOrigin)) throw new Error(`The login origin "${loginOrigin}" must be only an origin, like https://login.example.com`);
+  if (!isSiteSlug(siteSlug)) throw new Error(`The site slug "${siteSlug}" is not valid`);
+  if (!locales.includes(defaultLocale)) throw new Error(`The default language "${defaultLocale}" is not in the list of languages`);
+  if (branch?.trim() === '') throw new Error('The branch cannot be blank');
+  if (singletons.length + fileGroups.length + collections.length === 0) throw new Error('The site has nothing to edit: give it singletons, file groups or collections');
+  refuseRepeats(singletons.map(({ name }) => name), 'the singletons');
+  refuseRepeats([...fileGroups, ...collections].map(({ name }) => name), 'the file groups and collections');
+  for (const { label, files } of fileGroups) refuseRepeats(files.map(({ name }) => name), `the group "${label}"`);
+}
+
 const metaOf = (schema: z.ZodType, name: string): FieldMeta => {
   const meta = schema.meta() as unknown as FieldMeta | undefined;
   if (!meta?.label) throw new Error(`The contract field "${name}" has no label`);
@@ -192,9 +217,8 @@ export const contractFields = (contract: z.ZodObject): CmsField[] => fieldsOf(co
 
 /** A site's whole editor setup. Saves only reach a branch the login service also allows. */
 export function cmsConfig(input: CmsConfigInput): CmsConfig {
+  checkInput(input);
   const { repo, loginOrigin, siteSlug, locales, defaultLocale, singletons, fileGroups = [], collections = [] } = input;
-  if (!/^[a-z0-9][a-z0-9.-]{0,62}$/.test(siteSlug)) throw new Error(`The site slug "${siteSlug}" is not valid`);
-  if (!locales.includes(defaultLocale)) throw new Error(`The default language "${defaultLocale}" is not in the list of languages`);
   const groups = [...fileGroups.map(toGroup), ...collections.map(toFolder)];
 
   return {
@@ -209,8 +233,8 @@ export function cmsConfig(input: CmsConfigInput): CmsConfig {
     },
     media_folder: input.mediaFolder ?? 'static/images/uploads',
     public_folder: input.publicFolder ?? '/images/uploads',
-    slug: PLAIN_SLUGS,
-    media_libraries: SAFE_UPLOADS,
+    slug: structuredClone(PLAIN_SLUGS),
+    media_libraries: structuredClone(SAFE_UPLOADS),
     i18n: { structure: 'multiple_files', locales: [...locales], default_locale: defaultLocale },
     ...(singletons ? { singletons: singletons.map(toFile) } : {}),
     ...(groups.length === 0 ? {} : { collections: groups })
