@@ -33,6 +33,8 @@ export interface CmsConfigInput {
   repo: string;
   /** The login service every CMS request goes through. */
   loginOrigin: string;
+  /** This site's name on the login service, as in `login.example.com/<siteSlug>/`. */
+  siteSlug: string;
   locales: readonly string[];
   defaultLocale: string;
   singletons: readonly ContentFile[];
@@ -114,7 +116,8 @@ export const contractFields = (contract: z.ZodObject): CmsField[] => fieldsOf(co
 
 /** A site's whole editor setup. Saves only reach a branch the login service also allows. */
 export function cmsConfig(input: CmsConfigInput): CmsConfig {
-  const { repo, loginOrigin, locales, defaultLocale, singletons, collections = [] } = input;
+  const { repo, loginOrigin, siteSlug, locales, defaultLocale, singletons, collections = [] } = input;
+  if (!/^[a-z0-9][a-z0-9.-]{0,62}$/.test(siteSlug)) throw new Error(`The site slug "${siteSlug}" is not valid`);
   if (!locales.includes(defaultLocale)) throw new Error(`The default language "${defaultLocale}" is not in the list of languages`);
 
   return {
@@ -124,8 +127,8 @@ export function cmsConfig(input: CmsConfigInput): CmsConfig {
       branch: input.branch ?? 'main',
       base_url: loginOrigin,
       auth_endpoint: 'auth/popup',
-      api_root: loginOrigin,
-      graphql_api_root: loginOrigin
+      api_root: `${loginOrigin}/${siteSlug}`,
+      graphql_api_root: `${loginOrigin}/${siteSlug}`
     },
     media_folder: input.mediaFolder ?? 'static/images/uploads',
     public_folder: input.publicFolder ?? '/images/uploads',

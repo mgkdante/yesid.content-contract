@@ -23,6 +23,7 @@ const postContract = z.strictObject({
 const input: CmsConfigInput = {
   repo: 'owner/site',
   loginOrigin: 'https://login.example.com',
+  siteSlug: 'site',
   locales: ['fr', 'en'],
   defaultLocale: 'fr',
   singletons: [{ name: 'page', label: 'Page', file: 'src/lib/content/{{locale}}.json', contract: pageContract }]
@@ -93,7 +94,7 @@ test('a field without a label is an error, naming the field', () => {
   expect(() => contractFields(z.strictObject({ loose: z.string() }))).toThrow('loose');
 });
 
-test('every request goes to the login service, on the chosen branch', () => {
+test('every request goes to this site on the login service, on the chosen branch', () => {
   const { backend } = cmsConfig({ ...input, branch: 'preview' });
   expect(backend).toEqual({
     name: 'github',
@@ -101,9 +102,15 @@ test('every request goes to the login service, on the chosen branch', () => {
     branch: 'preview',
     base_url: 'https://login.example.com',
     auth_endpoint: 'auth/popup',
-    api_root: 'https://login.example.com',
-    graphql_api_root: 'https://login.example.com'
+    api_root: 'https://login.example.com/site',
+    graphql_api_root: 'https://login.example.com/site'
   });
+});
+
+test('a site slug that is not a plain path segment is an error, naming it', () => {
+  for (const siteSlug of ['', 'a/b', '../other', 'Site', 'a b']) {
+    expect(() => cmsConfig({ ...input, siteSlug })).toThrow(`"${siteSlug}"`);
+  }
 });
 
 test('the branch defaults to main and photos to the upload folder', () => {

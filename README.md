@@ -9,7 +9,7 @@ It checks structure only: a required text can't be blank, a misspelled field is 
 Releases are tarballs on GitHub, not on npm. Pin the exact version, and install Zod yourself so the project keeps a single copy:
 
 ```sh
-bun add -E zod https://github.com/mgkdante/yesid.content-contract/releases/download/v0.1.0/yesid-content-contract-0.1.0.tgz
+bun add -E zod https://github.com/mgkdante/yesid.content-contract/releases/download/v0.2.0/yesid-content-contract-0.2.0.tgz
 ```
 
 The package ships TypeScript source, so your `tsconfig.json` needs `allowImportingTsExtensions`. It is meant for build scripts, tests and `import type`. If you import it at runtime through Vite's server build, list it in `ssr.noExternal`.
@@ -31,6 +31,7 @@ export type SiteText = z.infer<typeof siteText>;
 export const config = cmsConfig({
   repo: 'owner/site',
   loginOrigin: 'https://login.example.com',
+  siteSlug: 'site',
   locales: ['fr', 'en'],
   defaultLocale: 'fr',
   singletons: [{ name: 'site-text', label: 'Site text', file: 'src/lib/content/{{locale}}.json', contract: siteText }]
@@ -62,7 +63,7 @@ Write `config` to YAML in a build script, with `Bun.YAML.stringify(config, null,
 
 ## Login service
 
-`cmsConfig` sends every CMS request to `loginOrigin`. That service signs people in and makes the commits, so editors don't need a GitHub account. It is not part of this package.
+`cmsConfig` sends sign-in to `loginOrigin`, and every CMS request to `loginOrigin/siteSlug`. That service signs people in and makes the commits, so editors don't need a GitHub account. It is not part of this package.
 
 ## License
 
