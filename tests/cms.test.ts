@@ -174,7 +174,25 @@ test('a content folder becomes a collection people can add to, as Markdown files
     create: true,
     extension: 'md',
     format: 'yaml-frontmatter',
-    i18n: true
+    i18n: { initial_locales: 'default' }
   });
   expect(posts && 'fields' in posts && posts.fields.map((field) => field.name)).toEqual(['title', 'published', 'photo', 'body']);
+});
+
+test('saved names stay plain, so a login service with strict file rules accepts them', () => {
+  const config = cmsConfig(input);
+  expect(config.slug).toEqual({ encoding: 'ascii', clean_accents: true });
+  expect(config.media_libraries.default.config.slugify_filename).toBe(true);
+});
+
+test('photos are converted and scaled down when uploaded, so a phone photo can be served as it is', () => {
+  expect(cmsConfig(input).media_libraries.default.config.transformations.raster_image).toEqual({ format: 'webp', quality: 85, width: 2048, height: 2048 });
+});
+
+test('a new folder entry starts in the default language, while file pages stay in every language', () => {
+  const files = { name: 'pages', label: 'Pages', files: [{ name: 'home', label: 'Home', file: 'src/lib/content/home.{{locale}}.json', contract: pageContract }] };
+  const folder = { name: 'posts', label: 'Blog', folder: 'src/lib/content/posts', contract: postContract };
+  const [group, posts] = cmsConfig({ ...input, singletons: undefined, fileGroups: [files], collections: [folder] }).collections!;
+  expect(group.i18n).toBe(true);
+  expect(posts.i18n).toEqual({ initial_locales: 'default' });
 });
