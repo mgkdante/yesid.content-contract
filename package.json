@@ -1,6 +1,6 @@
 {
   "name": "@yesid/content-contract",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "One Zod description of a site's editable content, giving its types, its build checks and its Sveltia CMS fields.",
   "license": "MIT",
   "repository": {

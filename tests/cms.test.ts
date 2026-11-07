@@ -129,9 +129,31 @@ test('a default language outside the list is an error', () => {
 });
 
 test('a content file becomes a singleton', () => {
-  const [page] = cmsConfig(input).singletons;
+  const [page] = cmsConfig(input).singletons ?? [];
   expect(page).toMatchObject({ name: 'page', label: 'Page', file: 'src/lib/content/{{locale}}.json', format: 'json', i18n: true });
   expect(page?.fields.map((field) => field.name)).toEqual(['hero', 'steps', 'questions', 'notes']);
+});
+
+test('a content group lists its files under one name in the sidebar', () => {
+  const { singletons, ...withoutSingletons } = input;
+  const config = cmsConfig({
+    ...withoutSingletons,
+    fileGroups: [{ name: 'pages', label: 'Pages', icon: 'web', files: singletons ?? [] }]
+  });
+  expect(config.singletons).toBeUndefined();
+  const [pages] = config.collections ?? [];
+  expect(pages).toMatchObject({ name: 'pages', label: 'Pages', icon: 'web', format: 'json', i18n: true });
+  expect('files' in pages! && pages.files[0]).toMatchObject({ name: 'page', label: 'Page', file: 'src/lib/content/{{locale}}.json', i18n: true });
+  expect('files' in pages! && pages.files[0]?.fields.map((field) => field.name)).toEqual(['hero', 'steps', 'questions', 'notes']);
+});
+
+test('content groups come before blog folders', () => {
+  const config = cmsConfig({
+    ...input,
+    fileGroups: [{ name: 'pages', label: 'Pages', files: [] }],
+    collections: [{ name: 'posts', label: 'Articles', folder: 'src/lib/content/posts', contract: postContract }]
+  });
+  expect(config.collections?.map(({ name }) => name)).toEqual(['pages', 'posts']);
 });
 
 test('a site without a blog has no collections at all', () => {
@@ -154,5 +176,5 @@ test('a content folder becomes a collection people can add to, as Markdown files
     format: 'yaml-frontmatter',
     i18n: true
   });
-  expect(posts?.fields.map((field) => field.name)).toEqual(['title', 'published', 'photo', 'body']);
+  expect(posts && 'fields' in posts && posts.fields.map((field) => field.name)).toEqual(['title', 'published', 'photo', 'body']);
 });
