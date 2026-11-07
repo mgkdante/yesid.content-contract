@@ -66,6 +66,8 @@ export interface CmsConfig {
   };
   media_folder: string;
   public_folder: string;
+  slug: typeof PLAIN_SLUGS;
+  media_libraries: typeof SAFE_UPLOADS;
   i18n: { structure: 'multiple_files'; locales: string[]; default_locale: string };
   singletons?: CmsFile[];
   collections?: (CmsFileGroup | CmsFolder)[];
@@ -97,9 +99,22 @@ interface CmsFolder {
   create: true;
   extension: 'md';
   format: 'yaml-frontmatter';
-  i18n: true;
+  i18n: { initial_locales: 'default' };
   fields: CmsField[];
 }
+
+/** Keeps saved file names plain: an accented name is one a strict login service can refuse. */
+const PLAIN_SLUGS = { encoding: 'ascii', clean_accents: true } as const;
+
+/** Renames an upload the same way, and shrinks it while it is still in the browser, so no build step has to. */
+const SAFE_UPLOADS = {
+  default: {
+    config: {
+      slugify_filename: true,
+      transformations: { raster_image: { format: 'webp', quality: 85, width: 2048, height: 2048 } }
+    }
+  }
+} as const;
 
 const metaOf = (schema: z.ZodType, name: string): FieldMeta => {
   const meta = schema.meta() as unknown as FieldMeta | undefined;
@@ -167,7 +182,8 @@ const toFolder = ({ name, label, labelSingular, folder, contract }: ContentFolde
   create: true,
   extension: 'md',
   format: 'yaml-frontmatter',
-  i18n: true,
+  // An entry may exist in one language. The default still leaves the others one click away.
+  i18n: { initial_locales: 'default' },
   fields: contractFields(contract)
 });
 
@@ -193,6 +209,8 @@ export function cmsConfig(input: CmsConfigInput): CmsConfig {
     },
     media_folder: input.mediaFolder ?? 'static/images/uploads',
     public_folder: input.publicFolder ?? '/images/uploads',
+    slug: PLAIN_SLUGS,
+    media_libraries: SAFE_UPLOADS,
     i18n: { structure: 'multiple_files', locales: [...locales], default_locale: defaultLocale },
     ...(singletons ? { singletons: singletons.map(toFile) } : {}),
     ...(groups.length === 0 ? {} : { collections: groups })
