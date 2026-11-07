@@ -189,6 +189,13 @@ test('photos are converted and scaled down when uploaded, so a phone photo can b
   expect(cmsConfig(input).media_libraries.default.config.transformations.raster_image).toEqual({ format: 'webp', quality: 85, width: 2048, height: 2048 });
 });
 
+test('an image field only offers photo formats, which are the ones that get converted', () => {
+  const { accept } = named(contractFields(postContract), 'photo');
+  expect(accept).toBe('image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif');
+  expect(accept).not.toContain('svg');
+  expect(accept).not.toContain('gif');
+});
+
 test('a new folder entry starts in the default language, while file pages stay in every language', () => {
   const files = { name: 'pages', label: 'Pages', files: [{ name: 'home', label: 'Home', file: 'src/lib/content/home.{{locale}}.json', contract: pageContract }] };
   const folder = { name: 'posts', label: 'Blog', folder: 'src/lib/content/posts', contract: postContract };

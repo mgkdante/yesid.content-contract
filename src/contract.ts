@@ -33,8 +33,11 @@ export const optionalParagraph = (label: string, hint?: string) => withMeta(z.st
 
 export const richText = (label: string, hint?: string) => withMeta(required, { label, hint, widget: 'richtext' });
 
+/** Photo formats the CMS converts on upload. SVG and animated GIF would stay as they are. */
+const PHOTO_FORMATS = 'image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif';
+
 export const image = (label: string, { hint, optional, shared }: { hint?: string; optional?: boolean; shared?: boolean } = {}) =>
-  withMeta(optional ? z.string() : required, { label, hint, widget: 'image', optional, shared });
+  withMeta(optional ? z.string() : required, { label, hint, widget: 'image', optional, shared, options: { accept: PHOTO_FORMATS } });
 
 /** A calendar date, stored as YYYY-MM-DD so it reads the same in every time zone. */
 export const date = (label: string, { hint, shared }: { hint?: string; shared?: boolean } = {}) =>

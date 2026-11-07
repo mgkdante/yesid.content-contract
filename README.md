@@ -48,7 +48,7 @@ Write `config` to YAML in a build script, with `Bun.YAML.stringify(config, null,
 | `paragraph(label, hint?)` | `text` | Not blank |
 | `optionalParagraph(label, hint?)` | `text` | May be empty |
 | `richText(label, hint?)` | `richtext` | Not blank |
-| `image(label, { hint, optional, shared })` | `image` | Not blank, unless `optional` |
+| `image(label, { hint, optional, shared })` | `image`, photo formats | Not blank, unless `optional` |
 | `date(label, { hint, shared })` | `datetime`, date only | A real `YYYY-MM-DD` date |
 | `group(label, shape, collapsed = true)` | `object` | Unknown fields are refused |
 | `list(label, item, { count, optional })` | `list` | Exactly `count` items; otherwise at least one, unless `optional` |
@@ -65,7 +65,7 @@ Write `config` to YAML in a build script, with `Bun.YAML.stringify(config, null,
 
 `cmsConfig` sends sign-in to `loginOrigin`, and every CMS request to `loginOrigin/siteSlug`. That service signs people in and makes the commits, so editors don't need a GitHub account. It is not part of this package.
 
-It also keeps saved names plain, because the service can limit which file paths it accepts. A post titled `Été à Montréal` is saved as `ete-a-montreal.fr.md`. A photo named `Mon Été.JPG` is saved as `mon-ete.webp`, at most 2048 pixels wide or tall, converted in the browser before it is uploaded.
+It also keeps saved names plain, because the service can limit which file paths it accepts. A post titled `Été à Montréal` is saved as `ete-a-montreal.fr.md`. A photo named `Mon Été.JPG` is saved as `mon-ete.webp`, at most 2048 pixels wide or tall, converted in the browser before it is uploaded. `image()` fields only offer photo formats, because SVG and animated images aren't converted. An image added inside rich text or the asset library has no such limit, and ASCII names can still contain `~`, so a service's rules should allow it.
 
 ## License
 
