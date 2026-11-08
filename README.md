@@ -70,7 +70,6 @@ It also keeps saved names plain, because the service can limit which file paths 
 ## Documentation
 
 - [Architecture](https://yesid-dev.notion.site/4113e863069081a0a0a2d6e6e00b1f63): how the package works, how a site uses it, and how releases are cut and proven. Public, and each page names the commit it was checked against.
-- [Training course](https://app.notion.com/p/4123e863069081d19632e7dfb8b52892): guided units on the source, for the maintainer. It needs a Notion account with access.
 
 ## License
 
