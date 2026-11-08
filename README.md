@@ -9,7 +9,7 @@ It checks structure only: a required text can't be blank, a misspelled field is 
 Releases are tarballs on GitHub, not on npm. Pin the exact version, and install Zod yourself so the project keeps a single copy:
 
 ```sh
-bun add -E zod https://github.com/mgkdante/yesid.content-contract/releases/download/v0.5.0/yesid-content-contract-0.5.0.tgz
+bun add -E zod https://github.com/mgkdante/yesid.content-contract/releases/download/v0.5.1/yesid-content-contract-0.5.1.tgz
 ```
 
 The package ships TypeScript source, so your `tsconfig.json` needs `allowImportingTsExtensions`. It is meant for build scripts, tests and `import type`. If you import it at runtime through Vite's server build, list it in `ssr.noExternal`.
