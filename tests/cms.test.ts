@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { z } from 'zod';
-import { cmsConfig, contractFields, date, group, image, line, list, optionalParagraph, paragraph, richText, type CmsConfigInput, type CmsField } from '../src/index.ts';
+import { cmsConfig, contractFields, date, group, image, line, list, optionalParagraph, paragraph, richText, type CmsConfigInput, type CmsField, type ContentFolder } from '../src/index.ts';
 
 const pageContract = z.strictObject({
   hero: group(
@@ -278,4 +278,44 @@ test('a new folder entry starts in the default language, while file pages stay i
   const [group, posts] = cmsConfig({ ...input, singletons: undefined, fileGroups: [files], collections: [folder] }).collections!;
   expect(group.i18n).toBe(true);
   expect(posts.i18n).toEqual({ initial_locales: 'default' });
+});
+
+const projectContract = z.strictObject({ name: line('Name'), summary: paragraph('Summary') });
+const projects: ContentFolder<typeof projectContract> = {
+  name: 'projects',
+  label: 'Projects',
+  folder: 'src/lib/content/projects',
+  contract: projectContract,
+  identifierField: 'name'
+};
+
+test('a folder can name the field a new entry file name comes from, written after its fields', () => {
+  const { singletons: _singletons, ...withoutContent } = input;
+  const [folder] = cmsConfig({ ...withoutContent, collections: [projects] }).collections!;
+  expect(folder).toMatchObject({ name: 'projects', identifier_field: 'name' });
+  expect(Object.keys(folder!).slice(-2)).toEqual(['fields', 'identifier_field']);
+});
+
+test('an identifier field that is not one of the folder fields is an error, naming it', () => {
+  const { singletons: _singletons, ...withoutContent } = input;
+  for (const identifierField of ['title', 'toString', '']) {
+    const folder = { ...projects, identifierField } as ContentFolder;
+    expect(() => cmsConfig({ ...withoutContent, collections: [folder] })).toThrow(`"${identifierField}"`);
+  }
+});
+
+test('a folder without an identifier field generates what it did before', () => {
+  const folder = { name: 'posts', label: 'Blog', folder: 'src/lib/content/posts', contract: postContract };
+  const [posts] = cmsConfig({ ...input, collections: [folder] }).collections!;
+  expect('identifier_field' in posts!).toBe(false);
+  expect(Object.keys(posts!)).toEqual(['name', 'label', 'folder', 'create', 'extension', 'format', 'i18n', 'fields']);
+});
+
+test('the identifier field type only accepts the folder contract field names', () => {
+  const typed: ContentFolder<typeof projectContract> = {
+    ...projects,
+    // @ts-expect-error `title` is not a field of this contract
+    identifierField: 'title'
+  };
+  expect(typed.identifierField as string).toBe('title');
 });
