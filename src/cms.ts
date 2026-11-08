@@ -20,12 +20,17 @@ export interface ContentFile {
 }
 
 /** A folder people can add entries to, such as a blog. Each language of an entry is one Markdown file. */
-export interface ContentFolder {
+export interface ContentFolder<Contract extends z.ZodObject = z.ZodObject> {
   name: string;
   label: string;
   labelSingular?: string;
   folder: string;
-  contract: z.ZodObject;
+  contract: Contract;
+  /**
+   * The field a new entry's file name is made from, once, when it is first saved. The editor uses `title`
+   * when there is one; without either, it names the file with a random code, which a site may use as an address.
+   */
+  identifierField?: Extract<keyof Contract['shape'], string>;
 }
 
 /** Several content files under one name in the CMS sidebar, such as a site's pages. */
@@ -48,7 +53,8 @@ export interface CmsConfigInput {
   defaultLocale: string;
   singletons?: readonly ContentFile[];
   fileGroups?: readonly ContentFileGroup[];
-  collections?: readonly ContentFolder[];
+  // `any`, so a folder typed against its own contract fits: `identifierField` makes the type invariant. cmsConfig checks the name.
+  collections?: readonly ContentFolder<any>[];
   branch?: string;
   mediaFolder?: string;
   publicFolder?: string;
@@ -101,6 +107,7 @@ interface CmsFolder {
   format: 'yaml-frontmatter';
   i18n: { initial_locales: 'default' };
   fields: CmsField[];
+  identifier_field?: string;
 }
 
 /** Keeps saved file names plain: an accented name is one a strict login service can refuse. */
@@ -143,6 +150,12 @@ function checkInput({ repo, loginOrigin, siteSlug, locales, defaultLocale, singl
   refuseRepeats(singletons.map(({ name }) => name), 'the singletons');
   refuseRepeats([...fileGroups, ...collections].map(({ name }) => name), 'the file groups and collections');
   for (const { label, files } of fileGroups) refuseRepeats(files.map(({ name }) => name), `the group "${label}"`);
+  // Own keys only, so a name like `toString` is not taken for a field.
+  for (const { name, contract, identifierField } of collections) {
+    if (identifierField !== undefined && !Object.hasOwn(contract.shape, identifierField)) {
+      throw new Error(`The identifier field "${identifierField}" is not a field of the folder "${name}"`);
+    }
+  }
 }
 
 const metaOf = (schema: z.ZodType, name: string): FieldMeta => {
@@ -203,7 +216,7 @@ const toGroup = ({ name, label, icon, files }: ContentFileGroup): CmsFileGroup =
   files: files.map(toFile)
 });
 
-const toFolder = ({ name, label, labelSingular, folder, contract }: ContentFolder): CmsFolder => ({
+const toFolder = ({ name, label, labelSingular, folder, contract, identifierField }: ContentFolder): CmsFolder => ({
   name,
   label,
   ...(labelSingular ? { label_singular: labelSingular } : {}),
@@ -213,7 +226,8 @@ const toFolder = ({ name, label, labelSingular, folder, contract }: ContentFolde
   format: 'yaml-frontmatter',
   // An entry may exist in one language. The default still leaves the others one click away.
   i18n: { initial_locales: 'default' },
-  fields: contractFields(contract)
+  fields: contractFields(contract),
+  ...(identifierField === undefined ? {} : { identifier_field: identifierField })
 });
 
 /** The CMS fields for a contract, in the contract's order. */
