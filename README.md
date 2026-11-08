@@ -70,6 +70,7 @@ It also keeps saved names plain, because the service can limit which file paths 
 ## Documentation
 
 - [Architecture](https://yesid-dev.notion.site/4113e863069081a0a0a2d6e6e00b1f63): how the package works, how a site uses it, and how releases are cut and proven. Public, and each page names the commit it was checked against.
+
 ## License
 
 MIT
