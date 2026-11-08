@@ -67,6 +67,11 @@ Write `config` to YAML in a build script, with `Bun.YAML.stringify(config, null,
 
 It also keeps saved names plain, because the service can limit which file paths it accepts. A post titled `Été à Montréal` is saved as `ete-a-montreal.fr.md`. A photo named `Mon Été.JPG` is saved as `mon-ete.webp`, at most 2048 pixels wide or tall, converted in the browser before it is uploaded. `image()` fields only offer photo formats, because SVG and animated images aren't converted. An image added inside rich text or the asset library has no such limit, and ASCII names can still contain `~`, so a service's rules should allow it.
 
+## Documentation
+
+- [Architecture](https://yesid-dev.notion.site/4113e863069081a0a0a2d6e6e00b1f63): how the package works, how a site uses it, and how releases are cut and proven. Public, and each page names the commit it was checked against.
+- [Training course](https://app.notion.com/p/4123e863069081d19632e7dfb8b52892): guided units on the source, for the maintainer. It needs a Notion account with access.
+
 ## License
 
 MIT
