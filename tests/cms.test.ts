@@ -114,7 +114,7 @@ test('a site slug that is not a plain path segment is an error, naming it', () =
 });
 
 test('a slug the login service keeps for itself is an error, naming it', () => {
-  for (const siteSlug of ['auth', 'api', 'admin', 'login', 'editor', 'account', 'privacy', 'terms', 'legal']) {
+  for (const siteSlug of ['auth', 'api', 'admin', 'login', 'editor', 'account', 'privacy', 'terms', 'legal', 'relay']) {
     expect(() => cmsConfig({ ...input, siteSlug })).toThrow(`"${siteSlug}"`);
   }
 });

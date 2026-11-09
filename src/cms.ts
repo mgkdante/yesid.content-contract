@@ -124,7 +124,7 @@ const SAFE_UPLOADS = {
 } as const;
 
 /** Site names the login service keeps for its own pages: `RESERVED` in yesid.login. It refuses them either way; this says so at build time. */
-const RESERVED_SLUGS = new Set(['auth', 'api', 'admin', 'login', 'editor', 'account', 'privacy', 'terms', 'legal']);
+const RESERVED_SLUGS = new Set(['auth', 'api', 'admin', 'login', 'editor', 'account', 'privacy', 'terms', 'legal', 'relay']);
 
 const isSiteSlug = (slug: string): boolean => typeof slug === 'string' && /^[a-z0-9][a-z0-9.-]{0,62}$/.test(slug) && !RESERVED_SLUGS.has(slug);
 
