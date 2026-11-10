@@ -5,7 +5,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mgkdante/yesid.content-contract.git"
+    "url": "git+https://github.com/yesid-dev/yesid.content-contract.git"
   },
   "type": "module",
   "sideEffects": false,
